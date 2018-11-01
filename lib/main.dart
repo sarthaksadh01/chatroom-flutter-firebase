@@ -1,11 +1,13 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import './splashscreen.dart';
 import './home.dart';
 
 void main() {
-  runApp(new Login());
+  runApp(new MaterialApp(
+    home: new MyApp(),
+  ));
 }
 
 class Login extends StatelessWidget {
@@ -23,21 +25,14 @@ class LoginScreeen extends StatefulWidget {
 class LoginScreeenState extends State<LoginScreeen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseUser _user;
   String _email;
   String _password;
   TextEditingController _e, _p;
 
   @override
   void initState() {
-    if ( _auth.currentUser() != null) {
-      print("yes");
-    }
-    // signed in
-     else
-
-  {
-    print("no");
-  }
+    startTime();
 
     _e = new TextEditingController();
     _p = new TextEditingController();
@@ -112,10 +107,10 @@ class LoginScreeenState extends State<LoginScreeen> {
     });
 
     handleSignUp(_email, _password).then((FirebaseUser user) {
-      print(user.uid);
+      startTime();
     }).catchError((e) {
-//      String s = e;
-      _scaffoldKey.currentState.showSnackBar(new SnackBar(content: new Text("Error occured Try again!")));
+      _scaffoldKey.currentState.showSnackBar(
+          new SnackBar(content: new Text("Error occured Try again!")));
       print("error is $e");
     });
   }
@@ -127,11 +122,12 @@ class LoginScreeenState extends State<LoginScreeen> {
     });
 
     handleSignIn(_email, _password).then((FirebaseUser user) {
-      print(user.uid);
+      startTime();
     }).catchError((e) {
-//      String s = e;
-      _scaffoldKey.currentState.showSnackBar(new SnackBar(content: new Text("Error occured make sure you entered correct details!")));
-     print("error is $e");
+      _scaffoldKey.currentState.showSnackBar(new SnackBar(
+          content: new Text(
+              "Error occured make sure you entered correct details!")));
+      print("error is $e");
     });
   }
 
@@ -147,5 +143,16 @@ class LoginScreeenState extends State<LoginScreeen> {
         email: email, password: password);
     print("signed in " + user.uid);
     return user;
+  }
+
+
+  Future startTime() async {
+    _user = await _auth.currentUser();
+    if (_user != null) {
+      print("user exist");
+      Route route = MaterialPageRoute(builder: (context) => SecondScreen());
+      Navigator.pushReplacement(context, route);
+    } else
+      print("not exist");
   }
 }

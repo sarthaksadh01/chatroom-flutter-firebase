@@ -24,10 +24,13 @@ class SecondScreen extends StatelessWidget {
   logout(BuildContext context) async {
 
     final FirebaseAuth auth = FirebaseAuth.instance;
-    final Future<FirebaseUser> user =auth.currentUser();
+    await auth.signOut();
+    final FirebaseUser user =await auth.currentUser();
+    if(user==null){
+      Route route = MaterialPageRoute(builder: (context) => Login());
+      Navigator.pushReplacement(context, route);
 
-//    await auth.signOut();
-    print(user);
+    }
 //    Navigator.pop(context);
   }
 }
