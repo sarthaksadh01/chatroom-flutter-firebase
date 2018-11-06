@@ -1,158 +1,174 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import './splashscreen.dart';
-import './home.dart';
+import './profile.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_database/ui/firebase_animated_list.dart';
 
 void main() {
   runApp(new MaterialApp(
-    home: new MyApp(),
+    debugShowCheckedModeBanner: false,
+    home: new SplashScreen(),
   ));
 }
 
-class Login extends StatelessWidget {
+final reference = FirebaseDatabase.instance.reference().child('messages');
+
+class Schat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return new MaterialApp(title: 'Login', home: new LoginScreeen());
+    return new MaterialApp(
+      title: 'ChatRoom',
+      home: new ChatScreen(),
+    );
   }
 }
 
-class LoginScreeen extends StatefulWidget {
+class ChatScreen extends StatefulWidget {
   @override
-  LoginScreeenState createState() => LoginScreeenState();
+  _ChatScreenState createState() => _ChatScreenState();
 }
 
-class LoginScreeenState extends State<LoginScreeen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  FirebaseUser _user;
-  String _email;
-  String _password;
-  TextEditingController _e, _p;
+class _ChatScreenState extends State<ChatScreen> {
+  String _email = "placeholder@gmail.com",_pic="https://flutter.io/images/catalog-widget-placeholder.png",_name="loading";
+  SharedPreferences sharedPreferences;
 
   @override
   void initState() {
-    startTime();
-
-    _e = new TextEditingController();
-    _p = new TextEditingController();
+    getCredential();
     super.initState();
   }
 
+  final TextEditingController _msg = new TextEditingController();
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-      key: _scaffoldKey,
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          new FlutterLogo(
-            size: 130.0,
+      appBar: new AppBar(
+        title: new Text('Chatroom'),
+        actions: <Widget>[
+          new IconButton(
+            icon: new Icon(Icons.account_circle),
+            onPressed: () {
+              profile(context);
+            },
           ),
-          Container(
-            padding: EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 0.0),
-            child: new TextField(
-              decoration: InputDecoration(
-                  hintText: 'Email address',
-                  icon: new Icon(Icons.email),
-                  labelText: 'Email'),
-              controller: _e,
+        ],
+      ),
+      body: new Column(
+        children: <Widget>[
+          new Flexible(
+            child: new FirebaseAnimatedList(
+              query: reference,
+              sort: (a, b) => b.key.compareTo(a.key),
+              padding: new EdgeInsets.all(8.0),
+              reverse: true,
+              itemBuilder:
+                  (_, DataSnapshot snapshot, Animation<double> animation, int) {
+                return new ChatMessage(
+                  text: snapshot.value['text'],
+                  email: snapshot.value['senderEmail'],
+                  pic: snapshot.value['pic'],
+                  name: snapshot.value['name'],
+                  e:_email
+                );
+              },
             ),
           ),
-          Container(
-            padding: EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 5.0),
-            child: new TextField(
-                decoration: InputDecoration(
-                    hintText: 'Enter Paassword',
-                    icon: new Icon(Icons.apps),
-                    labelText: 'Password'),
-                obscureText: true,
-                controller: _p),
-          ),
-          Container(
+          new Divider(height: 2.0),
+          new Container(
             padding: EdgeInsets.all(10.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            child: new Row(
               children: <Widget>[
-                new MaterialButton(
-                  height: 40.0,
-                  minWidth: 120.0,
-                  color: Theme.of(context).primaryColor,
-                  textColor: Colors.white,
-                  child: new Text("Login"),
-                  onPressed: sign,
-                  splashColor: Colors.redAccent,
+                new Flexible(
+                  child: new TextField(
+                    decoration: new InputDecoration(hintText: 'enter message!'),
+                    controller: _msg,
+                  ),
                 ),
-                new MaterialButton(
-                  height: 40.0,
-                  minWidth: 120.0,
-                  color: Theme.of(context).primaryColor,
-                  textColor: Colors.white,
-                  child: new Text("Register"),
-                  onPressed: register,
-                  splashColor: Colors.redAccent,
-                ),
+                new IconButton(
+                    icon: new Icon(Icons.send),
+                    onPressed: () {
+                      sendMsg(_msg.text);
+                      _msg.clear();
+//
+                    })
               ],
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
-  register() {
+  sendMsg(String txt) {
     setState(() {
-      _email = _e.text;
-      _password = _p.text;
-    });
-
-    handleSignUp(_email, _password).then((FirebaseUser user) {
-      startTime();
-    }).catchError((e) {
-      _scaffoldKey.currentState.showSnackBar(
-          new SnackBar(content: new Text("Error occured Try again!")));
-      print("error is $e");
+      reference.push().set({
+        'text': txt,
+        'senderEmail': _email,
+        'name': _name,
+        'pic': _pic,
+        'time': new DateTime.now().millisecondsSinceEpoch
+      });
     });
   }
 
-  sign() {
+  profile(BuildContext context) {
+    Route route = MaterialPageRoute(builder: (context) => Profile());
+    Navigator.push(context, route);
+  }
+
+  getCredential() async {
+    sharedPreferences = await SharedPreferences.getInstance();
     setState(() {
-      _email = _e.text;
-      _password = _p.text;
-    });
-
-    handleSignIn(_email, _password).then((FirebaseUser user) {
-      startTime();
-    }).catchError((e) {
-      _scaffoldKey.currentState.showSnackBar(new SnackBar(
-          content: new Text(
-              "Error occured make sure you entered correct details!")));
-      print("error is $e");
+      _name = sharedPreferences.getString("name");
+      _email = sharedPreferences.getString("email");
+      _pic = sharedPreferences.getString("pic");
     });
   }
+}
 
-  Future<FirebaseUser> handleSignIn(email, password) async {
-    final FirebaseUser user = await _auth.signInWithEmailAndPassword(
-        email: email, password: password);
-    print("signed in " + user.uid);
-    return user;
-  }
+// single message template---------------------//
 
-  Future<FirebaseUser> handleSignUp(email, password) async {
-    final FirebaseUser user = await _auth.createUserWithEmailAndPassword(
-        email: email, password: password);
-    print("signed in " + user.uid);
-    return user;
-  }
+class ChatMessage extends StatelessWidget {
+  ChatMessage({this.text, this.email, this.pic, this.name,this.e});
+  final String text, email, pic, name,e;
 
-
-  Future startTime() async {
-    _user = await _auth.currentUser();
-    if (_user != null) {
-      print("user exist");
-      Route route = MaterialPageRoute(builder: (context) => SecondScreen());
-      Navigator.pushReplacement(context, route);
-    } else
-      print("not exist");
+  @override
+  Widget build(BuildContext context) {
+    var x= Colors.green;
+    print(e);
+    if(email==e){
+      x=Colors.blue;
+    }
+    else x =Colors.red;
+    return new Container(
+      margin: const EdgeInsets.symmetric(vertical: 10.0),
+      child: new Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          new Container(
+            margin: const EdgeInsets.only(right: 16.0),
+            child: ClipRRect(
+              borderRadius: new BorderRadius.circular(30.0),
+              child: new CircleAvatar(
+                child: Image.network(pic),
+              ),
+            ),
+          ),
+          new Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              new Text(name, style: new TextStyle(
+                color: x
+              )),
+              new Container(
+                margin: const EdgeInsets.only(top: 5.0),
+                child: new Text(text),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
