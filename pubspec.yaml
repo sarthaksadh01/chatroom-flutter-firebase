@@ -29,6 +29,8 @@ dependencies:
   firebase_storage: ^1.0.4
   chewie: ^0.8.0
   photo_view: ^0.0.10
+  contact_picker: ^0.0.2
+  url_launcher: ^4.0.1
 dependency_overrides:
   http: ^0.12.0
 
