@@ -10,6 +10,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:contact_picker/contact_picker.dart';
 import './single_message.dart';
+import 'package:location/location.dart';
+
 
 
 void main() {
@@ -47,6 +49,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     getCredential();
+
     super.initState();
   }
 
@@ -156,6 +159,21 @@ class _ChatScreenState extends State<ChatScreen> {
     Route route = MaterialPageRoute(builder: (context) => Profile());
     Navigator.push(context, route);
   }
+  initPlatformState() async {
+    Location _location = new Location();
+    bool _permission = false;
+    String error;
+
+    Map<String, double> location;
+    _permission = await _location.hasPermission();
+    location = await _location.getLocation();
+    if(location!=null){
+      String url =location['latitude'].toString()+'@'+location['longitude'].toString();
+          sendMsg('location', 'location', url);
+    }
+    print(location);
+
+  }
 
   void _showDialog() {
     // flutter defined function
@@ -184,6 +202,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       .getDownloadURL();
                   print(dowurl.toString());
                   sendMsg("image", "image", dowurl.toString());
+                  Navigator.pop(context);
                 }),
             new IconButton(
                 icon: new Icon(Icons.video_library,color: Colors.blue),
@@ -200,14 +219,24 @@ class _ChatScreenState extends State<ChatScreen> {
                       .getDownloadURL();
                   print(dowurl.toString());
                   sendMsg("video", "video", dowurl.toString());
+                  Navigator.pop(context);
                 }),
             new IconButton(
-                icon: new Icon(Icons.contacts,color: Colors.purpleAccent,),
+                icon: new Icon(Icons.contacts,color: Colors.pink,),
                 onPressed: () async {
 
                   Contact contact = await _contactPicker.selectContact();
                   print(contact.toString());
                   sendMsg("contact", "contact", contact.toString());
+                  Navigator.pop(context);
+
+
+                }),
+            new IconButton(
+                icon: new Icon(Icons.location_on,color: Colors.purpleAccent,),
+                onPressed: () async {
+                  initPlatformState();
+                  Navigator.pop(context);
 
 
                 }),

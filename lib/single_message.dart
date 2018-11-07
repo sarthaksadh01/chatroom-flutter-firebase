@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 import 'package:photo_view/photo_view.dart';
-import 'package:url_launcher/url_launcher.dart';
 class ChatMessage extends StatelessWidget {
   ChatMessage(
       {this.text,
@@ -150,6 +149,42 @@ class ChatMessage extends StatelessWidget {
     ),
               ],
             ),
+          ],
+        ),
+      );
+    }
+    else if(type == 'location'){
+      var location = url.split('@');
+      String latitude =location[0],longitude=location[1];
+      return new Container(
+        margin: const EdgeInsets.symmetric(vertical: 10.0),
+        child: new Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            new Row(
+              children: <Widget>[
+                new Container(
+                  margin: const EdgeInsets.only(right: 16.0),
+                  child: ClipRRect(
+                    borderRadius: new BorderRadius.circular(30.0),
+                    child: new CircleAvatar(
+                      child: Image.network(pic),
+                    ),
+                  ),
+                ),
+                new Container(
+                  child: new Text(name, style: new TextStyle(color: x)),
+                )
+              ],
+            ),
+            Container(
+                padding: EdgeInsets.fromLTRB(55.0, 10.0, 0.0, 0.0),
+                height: 300.0,
+                child: PhotoViewInline(
+                  imageProvider: NetworkImage( "https://maps.googleapis.com/maps/api/staticmap?center=$latitude,$longitude&zoom=18&size=640x400&key=YOUR_API_KEY"),
+                )
+
+            )
           ],
         ),
       );
